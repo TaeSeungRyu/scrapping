@@ -1,27 +1,23 @@
 require("dotenv").config();
-const { chromium } = require("playwright");
+const { chromium, firefox } = require("playwright");
 
 (async () => {
-  //C:/Users/samin/AppData/Local/Google/Chrome/User Data/Default
-
-  const userData =
-    "C:/Users/samin/AppData/Local/Google/Chrome/User Data/Default";
-  //  const context = await chromium.launchPersistentContext(userData, {
   const browser = await chromium.launch({
     headless: false, // UI 보이게 실행
     args: [
-      "--disable-blink-features=AutomationControlled",
-      "--no-sandbox",
-      "--disable-web-security",
-      "--disable-infobars",
-      "--disable-extensions",
       "--start-maximized",
-      "--disable-dev-shm-usage",
-      "--disable-setuid-sandbox",
-      "--no-first-run",
-      "--disable-features=site-isolation-trials",
-      "--profile-directory=Default",
-      "--no-default-browser-check", // ✅ 브라우저 설정 초기화 방지
+      "--disable-popup-blocking",
+      "--disable-notifications",
+      "--disable-default-apps",
+      "--disable-web-security",
+      "--disable-extensions",
+      "--disable-infobars",
+      "--disable-gpu",
+      "--no-sandbox",
+      "--disable-blink-features=AutomationControlled",
+      "--incognito",
+      "--disable-application-cache",
+      "--incognito", // 시크릿 창 모드
     ],
     slowMo: 0,
   });
@@ -34,13 +30,6 @@ const { chromium } = require("playwright");
   });
 
   const page = await context.newPage();
-
-  // await page.evaluateOnNewDocument(() => {
-  //   Object.defineProperty(navigator, "userAgent", {
-  //     get: () =>
-  //       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  //   });
-  // });
 
   // 🚀 탐지 우회 추가 스크립트 실행
   await page.addInitScript(() => {
@@ -182,8 +171,11 @@ const { chromium } = require("playwright");
 
   // 🔐 로그인 시도
   try {
+    await page.waitForTimeout(1500);
+    //315, 814
     const idSelector =
       "xpath=/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/ul/li[1]/input";
+    await page.mouse.move(315 + 5, 814 + 5);
     await page.click(idSelector, { clickCount: 1 }); // 기존 내용 지우기
     await page.focus(idSelector); // 포커스 강제
 
@@ -192,11 +184,15 @@ const { chromium } = require("playwright");
       await page.keyboard.press(process.env.ID[i]); // 타이핑 (keydown, keyup 이벤트 발생)
       await page.waitForTimeout(200); // 사람처럼 입력 속도 조정
     }
+    await page.mouse.move(215 + 5, 614);
+    await page.locator(idSelector).evaluate((e) => e.blur());
 
     // ✅ 로그인 후 특정 요소가 나타나는지 확인
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
 
+    ////357, 814
     // 비밀번호 입력
+    await page.mouse.move(357 + 5, 814 + 5);
     const passwordSelector =
       "xpath=/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/ul/li[2]/input";
     await page.click(passwordSelector, {
@@ -209,7 +205,10 @@ const { chromium } = require("playwright");
       await page.keyboard.press(process.env.PASSWORD[i]); // 타이핑 (keydown, keyup 이벤트 발생)
       await page.waitForTimeout(200); // 사람처럼 입력 속도 조정
     }
+    await page.mouse.move(215 + 5, 614);
+    await page.locator(passwordSelector).evaluate((e) => e.blur());
 
+    //315, 1163
     // 로그인 버튼 클릭 (주석 처리된 부분 복원)
     // await page.click("xpath=/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/button");
     // await page.waitForTimeout(5000); // 페이지 로딩 대기
