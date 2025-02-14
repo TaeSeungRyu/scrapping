@@ -10,12 +10,14 @@
     "@playwright/test": "^1.48.1"
   },
   "dependencies": {
+    "chromedriver": "^133.0.1",
     "dotenv": "^16.4.7",
     "playwright-extra": "^4.3.6",
     "puppeteer": "2.0.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "selenium-webdriver": "^4.28.1"
   },
   "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }
