@@ -1,25 +1,48 @@
 require("dotenv").config();
-const { chromium, firefox } = require("playwright");
-
+const { chromium } = require("playwright-extra");
+const stealth = require("puppeteer-extra-plugin-stealth")();
+chromium.use(stealth);
 (async () => {
   const browser = await chromium.launch({
     headless: false, // UI 보이게 실행
     args: [
+      //1
       "--start-maximized",
       "--disable-popup-blocking",
       "--disable-notifications",
       "--disable-default-apps",
-      "--disable-web-security",
+      //"--disable-web-security",
       "--disable-extensions",
       "--disable-infobars",
-      "--disable-gpu",
-      "--no-sandbox",
+      //"--disable-gpu",
+      //"--no-sandbox",
       "--disable-blink-features=AutomationControlled",
       "--incognito",
       "--disable-application-cache",
-      "--incognito", // 시크릿 창 모드
+      //"--user-data-dir=C:/Users/samin/AppData/Local/Google/Chrome/User Data",
+      "--profile-directory=Default",
+      //2
+      // "--disable-popup-blocking",
+      // "--disable-notifications",
+      // "--disable-infobars",
+      // "--disable-extensions",
+      // "--disable-background-timer-throttling",
+      // "--disable-backgrounding-occluded-windows",
+      // "--disable-breakpad",
+      // "--disable-component-extensions-with-background-pages",
+      // "--disable-features=TranslateUI,BlinkGenPropertyTrees",
+      // "--disable-ipc-flooding-protection",
+      // "--enable-features=NetworkService,NetworkServiceInProcess",
+      // "--force-color-profile=srgb",
+      //3
+      // "--start-maximized",
+      // "--disable-popup-blocking",
+      // "--disable-notifications",
+      // "--disable-default-apps",
+      // "--disable-extensions",
+      // "--disable-infobars",
     ],
-    slowMo: 0,
+    slowMo: 0, // 자동화 속도 조절
   });
 
   const context = await browser.newContext({
@@ -29,11 +52,11 @@ const { chromium, firefox } = require("playwright");
     ignoreHTTPSErrors: true,
   });
 
-  const page = await context.newPage();
+  //const fakePage = await context.newPage(); // 첫 번째 탭
 
-  // 🚀 탐지 우회 추가 스크립트 실행
+  const page = await context.newPage(); //2번째 탭
+
   await page.addInitScript(() => {
-    // ✅ navigator.webdriver 제거
     Object.defineProperty(navigator, "webdriver", { get: () => false });
 
     Object.defineProperty(navigator, "maxTouchPoints", {
@@ -162,57 +185,70 @@ const { chromium, firefox } = require("playwright");
 
     window.onfocus = () => {};
     window.onblur = () => {};
+    console.log("init driver");
   });
 
-  // 🔗 웹사이트 접속
+  // ✅ 웹사이트 접속
   await page.goto("https://www.cardsales.or.kr/signin", {
     waitUntil: "domcontentloaded",
   });
 
-  // 🔐 로그인 시도
+  // ❗ 사람이 입력하는 것처럼 보이게 랜덤 대기
+  await page.waitForTimeout(1000 + Math.random() * 3000);
+
   try {
-    await page.waitForTimeout(1500);
-    //315, 814
+    // ✅ ID 입력 필드 선택
     const idSelector =
-      "xpath=/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/ul/li[1]/input";
-    await page.mouse.move(315 + 5, 814 + 5);
-    await page.click(idSelector, { clickCount: 1 }); // 기존 내용 지우기
-    await page.focus(idSelector); // 포커스 강제
+      "xpath=/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/ul/li[1]/input"; // XPath 단순화
+    await page.click(idSelector, { clickCount: 1 });
+    await page.focus(idSelector);
 
-    // ID 입력 (타이핑을 하나씩 시뮬레이션)
+    // ✅ 랜덤 타이핑 속도 적용
     for (let i = 0; i < process.env.ID.length; i++) {
-      await page.keyboard.press(process.env.ID[i]); // 타이핑 (keydown, keyup 이벤트 발생)
-      await page.waitForTimeout(200); // 사람처럼 입력 속도 조정
+      await page.keyboard.press(process.env.ID[i]);
+      await page.waitForTimeout(100 + Math.random() * 300); // 랜덤 딜레이
     }
-    await page.mouse.move(215 + 5, 614);
-    await page.locator(idSelector).evaluate((e) => e.blur());
 
-    // ✅ 로그인 후 특정 요소가 나타나는지 확인
-    await page.waitForTimeout(1000);
+    // ✅ Blur를 자연스럽게 처리 (마우스 이동 + 클릭)
+    await page.mouse.move(200 + Math.random() * 100, 600 + Math.random() * 100);
+    await page.mouse.click(
+      200 + Math.random() * 100,
+      600 + Math.random() * 100
+    );
 
-    ////357, 814
-    // 비밀번호 입력
-    await page.mouse.move(357 + 5, 814 + 5);
+    await page.waitForTimeout(1000 + Math.random() * 2000);
+
+    // ✅ 비밀번호 입력 필드 선택
     const passwordSelector =
       "xpath=/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/ul/li[2]/input";
-    await page.click(passwordSelector, {
-      clickCount: 1,
-    }); // 기존 내용 지우기
-    await page.focus(passwordSelector); // 포커스 강제
+    await page.click(passwordSelector, { clickCount: 1 });
+    await page.focus(passwordSelector);
 
-    // 비밀번호 입력 (타이핑을 하나씩 시뮬레이션)
+    // ✅ 랜덤 타이핑 속도 적용
     for (let i = 0; i < process.env.PASSWORD.length; i++) {
-      await page.keyboard.press(process.env.PASSWORD[i]); // 타이핑 (keydown, keyup 이벤트 발생)
-      await page.waitForTimeout(200); // 사람처럼 입력 속도 조정
+      await page.keyboard.press(process.env.PASSWORD[i]);
+      await page.waitForTimeout(100 + Math.random() * 300); // 랜덤 딜레이
     }
-    await page.mouse.move(215 + 5, 614);
-    await page.locator(passwordSelector).evaluate((e) => e.blur());
 
-    //315, 1163
-    // 로그인 버튼 클릭 (주석 처리된 부분 복원)
-    // await page.click("xpath=/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/button");
-    // await page.waitForTimeout(5000); // 페이지 로딩 대기
+    // ✅ Blur를 자연스럽게 처리 (마우스 이동 + 클릭)
+    await page.mouse.move(200 + Math.random() * 100, 600 + Math.random() * 100);
+    await page.mouse.click(
+      200 + Math.random() * 100,
+      600 + Math.random() * 100
+    );
+
+    await page.waitForTimeout(1000 + Math.random() * 2000);
+
+    // ✅ 로그인 버튼 클릭 (랜덤 딜레이)
+    // const loginButtonSelector = "xpath=//button[@type='submit']";
+    // await page.waitForTimeout(500 + Math.random() * 2000);
+    // await page.click(loginButtonSelector);
+
+    // ✅ 로그인 후 로딩 대기
+    await page.waitForTimeout(5000 + Math.random() * 5000);
   } catch (error) {
     console.log("로그인 실패:", error);
   }
+
+  // await browser.close();
 })();
