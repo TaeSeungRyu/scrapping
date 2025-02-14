@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { Builder, By, Key, until } = require("selenium-webdriver");
+const { Builder, By, until, Key } = require("selenium-webdriver");
 const chrome = require("selenium-webdriver/chrome");
 
 (async function main() {
@@ -7,12 +7,12 @@ const chrome = require("selenium-webdriver/chrome");
   const options = new chrome.Options();
   options.addArguments("--start-maximized");
   options.addArguments("--disable-popup-blocking");
-  options.addArguments("--disable-notifications");
+  //options.addArguments("--disable-notifications");
   options.addArguments("--disable-blink-features=AutomationControlled");
-  options.addArguments("--no-sandbox");
+  //options.addArguments("--no-sandbox");
   options.addArguments("--disable-infobars");
-  options.addArguments("--disable-dev-shm-usage");
-  options.addArguments("--disable-extensions");
+  //options.addArguments("--disable-dev-shm-usage");
+  //options.addArguments("--disable-extensions");
 
   // ✅ User-Agent 변경 (탐지 우회)
   options.addArguments(
@@ -29,14 +29,29 @@ const chrome = require("selenium-webdriver/chrome");
     // ✅ 웹사이트 접속
     await driver.get("https://www.naver.com");
 
-    await driver.sleep(3000);
+    await driver.sleep(1000);
 
     // ✅ 새 탭 열기
+    // await driver
+    //   .actions()
+    //   .keyDown(Key.CONTROL)
+    //   .sendKeys("t")
+    //   .perform();
+
+    // await driver.actions().sendKeys(Key.CONTROL, "t").perform();
+    // await driver
+    //   .actions()
+    //   .sendKeys(Key.CONTROL + "t")
+    //   .perform();
+
+    // console.log("새 탭을 여는 키 입력 동작 완료", Key.CONTROL);
     await driver.executeScript("window.open('about:blank', '_blank');");
-    await driver.sleep(2000);
+    await driver.sleep(1000);
     let tabs = await driver.getAllWindowHandles();
     await driver.switchTo().window(tabs[1]);
     await driver.get("https://www.cardsales.or.kr/signin");
+    await driver.navigate().refresh();
+
     await driver.sleep(2000);
 
     // ✅ 랜덤 입력 함수 (사람처럼 입력)
@@ -89,9 +104,6 @@ const chrome = require("selenium-webdriver/chrome");
     );
     await passwordInput.click();
     await typeWithDelay(passwordInput, process.env.PASSWORD);
-
-    // ✅ 로그인 후 로딩 대기
-    await driver.sleep(5000 + Math.random() * 5000);
   } catch (error) {
     console.error("❌ 오류 발생:", error);
   }

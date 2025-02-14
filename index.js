@@ -1,6 +1,29 @@
 require("dotenv").config();
 const { chromium } = require("playwright-extra");
-const stealth = require("puppeteer-extra-plugin-stealth")();
+const stealth = require("puppeteer-extra-plugin-stealth")({
+  // 사용자 에이전트 설정 (기본값: false)
+  userAgent:
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+
+  // 헤드리스 모드에서 `navigator.webdriver` 값 숨기기 (기본값: true)
+  hideWebDriver: true,
+
+  // WebDriver를 탐지하는 스크립트 차단 (기본값: true)
+  blockResources: true,
+
+  // `navigator.plugins`를 숨기기 (기본값: true)
+  hidePlugins: true,
+});
+stealth.beforeConnect = async (options) => {
+  options.userAgent =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36";
+  options.viewport = { width: 1920, height: 1080 };
+  options.ignoreHTTPSErrors = true;
+  options.hideWebDriver = true;
+  options.blockResources = true;
+  options.hidePlugins = true;
+  return options;
+};
 chromium.use(stealth);
 (async () => {
   const browser = await chromium.launch({
@@ -57,135 +80,115 @@ chromium.use(stealth);
   const page = await context.newPage(); //2번째 탭
 
   await page.addInitScript(() => {
-    Object.defineProperty(navigator, "webdriver", { get: () => false });
-
-    Object.defineProperty(navigator, "maxTouchPoints", {
-      get: () => 0,
-    });
-
-    Object.defineProperty(window.console, "debug", () => {});
-
-    // ✅ DevTools 탐지 방지
-
-    // ✅ window.chrome 속성 추가
-    window.chrome = { runtime: {} };
-
-    // ✅ navigator.languages, plugins 조작
-    Object.defineProperty(navigator, "languages", {
-      get: () => ["ko-KR", "en-US"],
-    });
-
-    Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3, 4, 5] });
-
-    // ✅ WebGL & Canvas Fingerprint 우회
-    const getParameter = WebGLRenderingContext.prototype.getParameter;
-    WebGLRenderingContext.prototype.getParameter = function (parameter) {
-      if (parameter === 37445) return "Intel Open Source Technology Center"; // UNMASKED_VENDOR_WEBGL
-      if (parameter === 37446) return "Mesa DRI Intel(R) HD Graphics 620"; // UNMASKED_RENDERER_WEBGL
-      return getParameter.call(this, parameter);
-    };
-
-    // ✅ Hardware Concurrency 조작 (코어 수)
-    Object.defineProperty(navigator, "hardwareConcurrency", {
-      get: () => 8,
-    });
-
-    // ✅ Device Memory 조작 (RAM 크기)
-    Object.defineProperty(navigator, "deviceMemory", {
-      get: () => 8,
-    });
-
-    Object.defineProperty(navigator, "userAgentData", {
-      get: () => ({
-        brands: [
-          { brand: "Not A(Brand", version: "8" },
-          { brand: "Chromium", version: "132" },
-          { brand: "Google Chrome", version: "132" },
-        ],
-        mobile: false,
-        platform: "Windows",
-      }),
-    });
-
-    Object.defineProperty(window, "chrome", {
-      value: {
-        app: {
-          isInstalled: false,
-          InstallState: {
-            DISABLED: "disabled",
-            INSTALLED: "installed",
-            NOT_INSTALLED: "not_installed",
-          },
-          RunningState: {
-            CANNOT_RUN: "cannot_run",
-            READY_TO_RUN: "ready_to_run",
-            RUNNING: "running",
-          },
-        },
-      },
-      writable: true, // 속성을 덮어쓸 수 있게 설정
-    });
-
-    // ✅ Notification 탐지 우회
-    Object.defineProperty(Notification, "permission", {
-      get: () => "granted",
-    });
-    console.debug = function () {};
-    console.debug.toString = function () {
-      return "function debug() { [native code] }";
-    };
-
-    // ✅ WebRTC IP 탐지 우회
-    navigator.mediaDevices.getUserMedia = function (constraints) {
-      return new Promise((resolve, reject) => {
-        resolve(new MediaStream());
-      });
-    };
-
-    // ✅ MediaDevices.enumerateDevices() 조작
-    navigator.mediaDevices.enumerateDevices = async function () {
-      return [
-        { kind: "audioinput", label: "Microphone", deviceId: "default" },
-        { kind: "audiooutput", label: "Speakers", deviceId: "default" },
-        { kind: "videoinput", label: "Webcam", deviceId: "default" },
-      ];
-    };
-
-    // ✅ Performance API 조작
-    window.PerformanceObserver = class {
-      observe() {}
-      disconnect() {}
-    };
-
-    // ✅ SpeechSynthesis API 조작
-    window.speechSynthesis = {
-      getVoices: () => [
-        { name: "Google 한국어", lang: "ko-KR" },
-        { name: "Google US English", lang: "en-US" },
-      ],
-    };
-
-    // ✅ fetch 요청 패턴 우회 (자동화 탐지 방지)
-    const originalFetch = window.fetch;
-    window.fetch = function (...args) {
-      return originalFetch.apply(this, args);
-    };
-
-    // ✅ XMLHttpRequest 조작 방지
-    const originalOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function (method, url) {
-      if (url.includes("automation")) return; // 특정 요청 차단
-      return originalOpen.apply(this, arguments);
-    };
-
-    // ✅ Focus 이벤트 조작
-    Object.defineProperty(document, "hasFocus", {
-      get: () => true,
-    });
-
-    window.onfocus = () => {};
-    window.onblur = () => {};
-    console.log("init driver");
+    // Object.defineProperty(navigator, "webdriver", { get: () => false });
+    // Object.defineProperty(navigator, "maxTouchPoints", {
+    //   get: () => 0,
+    // });
+    // Object.defineProperty(window.console, "debug", () => {});
+    // // ✅ DevTools 탐지 방지
+    // // ✅ window.chrome 속성 추가
+    // window.chrome = { runtime: {} };
+    // // ✅ navigator.languages, plugins 조작
+    // Object.defineProperty(navigator, "languages", {
+    //   get: () => ["ko-KR", "en-US"],
+    // });
+    // Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3, 4, 5] });
+    // // ✅ WebGL & Canvas Fingerprint 우회
+    // const getParameter = WebGLRenderingContext.prototype.getParameter;
+    // WebGLRenderingContext.prototype.getParameter = function (parameter) {
+    //   if (parameter === 37445) return "Intel Open Source Technology Center"; // UNMASKED_VENDOR_WEBGL
+    //   if (parameter === 37446) return "Mesa DRI Intel(R) HD Graphics 620"; // UNMASKED_RENDERER_WEBGL
+    //   return getParameter.call(this, parameter);
+    // };
+    // // ✅ Hardware Concurrency 조작 (코어 수)
+    // Object.defineProperty(navigator, "hardwareConcurrency", {
+    //   get: () => 8,
+    // });
+    // // ✅ Device Memory 조작 (RAM 크기)
+    // Object.defineProperty(navigator, "deviceMemory", {
+    //   get: () => 8,
+    // });
+    // Object.defineProperty(navigator, "userAgentData", {
+    //   get: () => ({
+    //     brands: [
+    //       { brand: "Not A(Brand", version: "8" },
+    //       { brand: "Chromium", version: "132" },
+    //       { brand: "Google Chrome", version: "132" },
+    //     ],
+    //     mobile: false,
+    //     platform: "Windows",
+    //   }),
+    // });
+    // Object.defineProperty(window, "chrome", {
+    //   value: {
+    //     app: {
+    //       isInstalled: false,
+    //       InstallState: {
+    //         DISABLED: "disabled",
+    //         INSTALLED: "installed",
+    //         NOT_INSTALLED: "not_installed",
+    //       },
+    //       RunningState: {
+    //         CANNOT_RUN: "cannot_run",
+    //         READY_TO_RUN: "ready_to_run",
+    //         RUNNING: "running",
+    //       },
+    //     },
+    //   },
+    //   writable: true, // 속성을 덮어쓸 수 있게 설정
+    // });
+    // // ✅ Notification 탐지 우회
+    // Object.defineProperty(Notification, "permission", {
+    //   get: () => "granted",
+    // });
+    // console.debug = function () {};
+    // console.debug.toString = function () {
+    //   return "function debug() { [native code] }";
+    // };
+    // // ✅ WebRTC IP 탐지 우회
+    // navigator.mediaDevices.getUserMedia = function (constraints) {
+    //   return new Promise((resolve, reject) => {
+    //     resolve(new MediaStream());
+    //   });
+    // };
+    // // ✅ MediaDevices.enumerateDevices() 조작
+    // navigator.mediaDevices.enumerateDevices = async function () {
+    //   return [
+    //     { kind: "audioinput", label: "Microphone", deviceId: "default" },
+    //     { kind: "audiooutput", label: "Speakers", deviceId: "default" },
+    //     { kind: "videoinput", label: "Webcam", deviceId: "default" },
+    //   ];
+    // };
+    // // ✅ Performance API 조작
+    // window.PerformanceObserver = class {
+    //   observe() {}
+    //   disconnect() {}
+    // };
+    // // ✅ SpeechSynthesis API 조작
+    // window.speechSynthesis = {
+    //   getVoices: () => [
+    //     { name: "Google 한국어", lang: "ko-KR" },
+    //     { name: "Google US English", lang: "en-US" },
+    //   ],
+    // };
+    // // ✅ fetch 요청 패턴 우회 (자동화 탐지 방지)
+    // const originalFetch = window.fetch;
+    // window.fetch = function (...args) {
+    //   return originalFetch.apply(this, args);
+    // };
+    // // ✅ XMLHttpRequest 조작 방지
+    // const originalOpen = XMLHttpRequest.prototype.open;
+    // XMLHttpRequest.prototype.open = function (method, url) {
+    //   if (url.includes("automation")) return; // 특정 요청 차단
+    //   return originalOpen.apply(this, arguments);
+    // };
+    // // ✅ Focus 이벤트 조작
+    // Object.defineProperty(document, "hasFocus", {
+    //   get: () => true,
+    // });
+    // window.onfocus = () => {};
+    // window.onblur = () => {};
+    // console.log("init driver");
   });
 
   // ✅ 웹사이트 접속

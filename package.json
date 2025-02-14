@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "playwright open"
+    "dev": "playwright open",
+    "http-server": "http-server"
   },
   "devDependencies": {
     "@playwright/test": "^1.48.1"
@@ -12,6 +13,7 @@
   "dependencies": {
     "chromedriver": "^133.0.1",
     "dotenv": "^16.4.7",
+    "http-server": "^14.1.1",
     "playwright-extra": "^4.3.6",
     "puppeteer": "2.0.0",
     "puppeteer-extra": "^3.3.6",
