@@ -1,11 +1,12 @@
 {
   "name": "scrapping-sample",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "main.js",
   "license": "MIT",
   "scripts": {
     "dev": "playwright open",
-    "http-server": "http-server"
+    "http-server": "http-server",
+    "electron": "electron ."
   },
   "devDependencies": {
     "@playwright/test": "^1.48.1"
@@ -13,6 +14,7 @@
   "dependencies": {
     "chromedriver": "^133.0.1",
     "dotenv": "^16.4.7",
+    "electron": "^34.2.0",
     "http-server": "^14.1.1",
     "playwright-extra": "^4.3.6",
     "puppeteer": "2.0.0",
