@@ -26,73 +26,124 @@ async function createWindow() {
 
   win.loadURL("https://www.cardsales.or.kr/signin");
   win.setFullScreen(true);
-  console.log("전체화면 모드로 실행됩니다.");
+  console.log("full screen");
 
   win.webContents.on("dom-ready", async () => {
     setTimeout(async () => {
-      console.log("DOM 로드 완료, 로그인 시도 중...");
+      console.log("dom ready");
 
-      const result = await win.webContents.executeJavaScript(`
+      await win.webContents.executeJavaScript(`
         function getElementByXPath(xpath) {
           let result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
           return result.singleNodeValue; // 요소가 없으면 null 반환
         }
-
         const idField = getElementByXPath("${idSelector}");
         const passwordField = getElementByXPath("${passwordSelector}");
-        const loginButton = getElementByXPath("${loginSelector}");
-
-        if (idField && passwordField && loginButton) {
+        if (idField && passwordField) {
           idField.value = "${userId}"; 
           passwordField.value = "${userPassword}";
-
-          // 버튼 위치 정보 가져오기
+          "";
+        } else {
+          "error";
+        }
+      `);
+      let result = await win.webContents.executeJavaScript(`
+        const loginButton = getElementByXPath("${loginSelector}");
+        if (loginButton) {
           const rect = loginButton.getBoundingClientRect();
-          rect;
+          JSON.stringify({ 
+            left: rect.left, 
+            top: rect.top, 
+            width: rect.width, 
+            height: rect.height 
+          });
         } else {
           "error";
         }
       `);
 
+      result = JSON.parse(result);
+
       if (result && typeof result === "object") {
-        console.log("login position", result);
+        console.log("login button postition:", result);
+        // 마우스 이동 애니메이션 실행
+        await moveMouseSmoothly(
+          win,
+          result.left + result.width / 2,
+          result.top + result.height / 2
+        );
+        console.log("move mouse");
 
-        // 마우스 이동 이벤트
-        win.webContents.sendInputEvent({
-          type: "mouseMove",
-          x: result.left + result.width / 2,
-          y: result.top + result.height / 2,
-        });
-
-        // 클릭 이벤트 (1초 후)
+        // 랜덤한 시간 후 클릭
         setTimeout(() => {
-          win.webContents.sendInputEvent({
-            type: "mouseDown",
-            button: "left",
-            x: result.left + result.width / 2,
-            y: result.top + result.height / 2,
-          });
-
-          win.webContents.sendInputEvent({
-            type: "mouseUp",
-            button: "left",
-            x: result.left + result.width / 2,
-            y: result.top + result.height / 2,
-          });
-
-          console.log("okok");
-
-          setTimeout(async () => {
-            const result = await win.webContents.executeJavaScript(
-              ` loginButton.click(); `
-            );
-          }, 1000);
-        }, 1000);
+          clickButton(
+            win,
+            result.left + result.width / 2,
+            result.top + result.height / 2
+          );
+          // clickButton(win, 500, 50);
+          // clickButton(win, 600, 50);
+          // clickButton(win, 700, 50);
+          // clickButton(win, 800, 50);
+          // clickButton(win, 900, 50);
+        }, Math.random() * 500 + 500); // 500ms ~ 1000ms 랜덤 딜레이
       } else {
-        console.log("로그인 버튼을 찾을 수 없음");
+        console.log("can not found login button");
       }
     }, 3000);
   });
 }
 
 app.on("ready", createWindow);
+
+// 부드럽게 마우스를 이동하는 함수
+async function moveMouseSmoothly(win, targetX, targetY) {
+  return new Promise((resolve) => {
+    let step = 0;
+    const steps = Math.floor(Math.random() * 10) + 10; // 10~20 스텝으로 이동
+    const startX = 400;
+    const startY = 300;
+    const dx = (targetX - startX) / steps;
+    const dy = (targetY - startY) / steps;
+
+    const interval = setInterval(() => {
+      if (step >= steps) {
+        clearInterval(interval);
+        resolve();
+      } else {
+        win.webContents.sendInputEvent({
+          type: "mouseMove",
+          x: startX + dx * step,
+          y: startY + dy * step,
+        });
+        step++;
+      }
+    }, 30); // 30ms 간격으로 이동
+  });
+}
+
+// 클릭 이벤트 실행 함수
+function clickButton(win, x, y) {
+  x = Math.floor(x);
+  y = Math.floor(y);
+  console.log("click button start", x, y);
+  win.webContents.sendInputEvent({ type: "mouseMove", x, y });
+  win.webContents.sendInputEvent({ type: "mouseEnter", x, y });
+  win.webContents.sendInputEvent({
+    type: "mouseDown",
+    button: "left",
+    x,
+    y,
+    clickCount: 1,
+  });
+  setTimeout(() => {
+    win.webContents.sendInputEvent({
+      type: "mouseUp",
+      button: "left",
+      x,
+      y,
+      clickCount: 1,
+    });
+    console.log("click button end", x, y);
+  }, 200 + 100); // 100ms~300ms 랜덤 클릭 딜레이
+}
