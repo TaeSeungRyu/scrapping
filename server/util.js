@@ -36,32 +36,33 @@ async function moveMouseSmoothly(win, result) {
 }
 
 // 클릭 이벤트 실행 함수
-function clickButton(win, result) {
-  let x = result.left + result.width / 2;
-  let y = result.top + result.height / 2;
+async function clickButton(win, result) {
+  let x = Math.floor(result.left + result.width / 2);
+  let y = Math.floor(result.top + result.height / 2);
 
-  x = Math.floor(x);
-  y = Math.floor(y);
   console.log("click button start", x, y);
-  win.webContents.sendInputEvent({ type: "mouseMove", x, y });
-  win.webContents.sendInputEvent({ type: "mouseEnter", x, y });
-  win.webContents.sendInputEvent({
+  await win.webContents.sendInputEvent({ type: "mouseMove", x, y });
+  await win.webContents.sendInputEvent({ type: "mouseEnter", x, y });
+  await win.webContents.sendInputEvent({
     type: "mouseDown",
     button: "left",
     x,
     y,
     clickCount: 1,
   });
-  setTimeout(() => {
-    win.webContents.sendInputEvent({
-      type: "mouseUp",
-      button: "left",
-      x,
-      y,
-      clickCount: 1,
-    });
-    console.log("click button end", x, y);
-  }, 200 + 100); // 100ms~300ms 랜덤 클릭 딜레이
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      win.webContents.sendInputEvent({
+        type: "mouseUp",
+        button: "left",
+        x,
+        y,
+        clickCount: 1,
+      });
+      resolve();
+    }, Math.random() * 200 + 100); // 100ms ~ 300ms 랜덤 클릭 딜레이
+  });
 }
 
 function setupLoggers(log) {

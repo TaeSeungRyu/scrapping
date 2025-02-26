@@ -8,15 +8,15 @@ const {
 } = require("./server/util");
 const log = require("electron-log");
 const { runHttpServer } = require("./server/server");
+const {
+  ID_SELECTOR_XPATH,
+  PASSWORD_SELECTOR_XPATH,
+  LOGIN_SELECTOR_XPATH,
+  GET_ELEMENT_BY_XPATH,
+  FIRST_HEADER_TAP_XPATH,
+} = require("./business/script");
 
 let win; // 윈도우 브라우저 전역 변수 선언
-
-const idSelector =
-  "/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/ul/li[1]/input";
-const passwordSelector =
-  "/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/ul/li[2]/input";
-const loginSelector =
-  "/html/body/div[2]/div/form/div[2]/div/div/div/div[2]/button";
 
 // 환경 변수에서 계정 정보 가져오기
 const userId = process.env.ID;
@@ -24,6 +24,16 @@ const userPassword = process.env.PASSWORD;
 const scrapingUrl = process.env.SCRAPING_URL;
 
 setupLoggers(log);
+
+function _firstInit(win) {
+  return new Promise((resolve) => {
+    win.setFullScreen(true);
+    win.webContents.session.clearCache();
+    win.webContents.session.clearStorageData();
+    win.webContents.session.clearAuthCache();
+    resolve();
+  });
+}
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -34,28 +44,26 @@ async function createWindow() {
       contextIsolation: true,
     },
   });
+  //새 창 방지
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url === "about:blank") {
+      return {
+        action: "allow",
+      };
+    }
+    return { action: "deny" };
+  });
 
   runHttpServer(async () => {
-    if (!win.webContents.isLoading()) {
-      win.loadURL(scrapingUrl);
-    }
+    await win.loadURL(scrapingUrl);
 
-    win.setFullScreen(true);
-    win.webContents.session.clearCache();
-    win.webContents.session.clearStorageData();
-    win.webContents.session.clearAuthCache();
+    await _firstInit(win);
 
-    log.info("start scraping");
-
-    win.webContents.on("dom-ready", async () => {
-      console.log("dom ready");
-      await win.webContents.executeJavaScript(`
-        function getElementByXPath(xpath) {
-          let result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-          return result.singleNodeValue; // 요소가 없으면 null 반환
-        }
-        const idField = getElementByXPath("${idSelector}");
-        const passwordField = getElementByXPath("${passwordSelector}");
+    //진입
+    await win.webContents.executeJavaScript(`
+        ${GET_ELEMENT_BY_XPATH}
+        const idField = getElementByXPath("${ID_SELECTOR_XPATH}");
+        const passwordField = getElementByXPath("${PASSWORD_SELECTOR_XPATH}");
         if (idField && passwordField) {
           idField.value = "${userId}"; 
           passwordField.value = "${userPassword}";
@@ -64,8 +72,8 @@ async function createWindow() {
           "error";
         }
       `);
-      let result = await win.webContents.executeJavaScript(`
-        const loginButton = getElementByXPath("${loginSelector}");
+    let result = await win.webContents.executeJavaScript(`
+        const loginButton = getElementByXPath("${LOGIN_SELECTOR_XPATH}");
         if (loginButton) {
           const rect = loginButton.getBoundingClientRect();
           JSON.stringify({ 
@@ -78,23 +86,40 @@ async function createWindow() {
           "error";
         }
       `);
-      console.log("result1 : ", result);
-      result = parseJson(result);
-      console.log("result2 : ", result);
-      if (result && typeof result === "object") {
-        await moveMouseSmoothly(win, result);
-        setTimeout(() => {
-          clickButton(win, result);
-        }, Math.random() * 500 + 500); // 500ms ~ 1000ms 랜덤 딜레이
-      } else {
-        log.error("login button not found");
-      }
+    result = parseJson(result);
+    //로그인 시도
+    if (result && typeof result === "object") {
+      await moveMouseSmoothly(win, result);
+      await new Promise((resolve) => {
+        setTimeout(async () => {
+          await clickButton(win, result);
+          resolve();
+        }, Math.random() * 500 + 500);
+      }); // 500ms ~ 1000ms 랜덤 딜레이
+    } else {
+      log.error("login button not found");
+    }
+
+    //헤더 탭 클릭
+    await new Promise((resolve) => {
+      setTimeout(async () => {
+        await win.webContents.executeJavaScript(`
+        ${GET_ELEMENT_BY_XPATH}
+        const headerTap = getElementByXPath("${FIRST_HEADER_TAP_XPATH}");
+        headerTap.click();
+    `);
+        resolve();
+      }, Math.random() * 3000);
     });
-    console.log("scraping end");
+
+    //데이터 반환
+    //TODO : blabla
+
+    console.log("end");
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve();
-      }, 10000);
+      }, 1000);
     });
   });
 }
