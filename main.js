@@ -5,6 +5,7 @@ const {
   clickButton,
   setupLoggers,
   parseJson,
+  asyncFunction,
 } = require("./server/util");
 const log = require("electron-log");
 const { runHttpServer } = require("./server/server");
@@ -14,7 +15,10 @@ const {
   LOGIN_SELECTOR_XPATH,
   GET_ELEMENT_BY_XPATH,
   FIRST_HEADER_TAP_XPATH,
+  LEFT_MENU_XPATH,
+  SELECTED_ID_FUNCTION,
 } = require("./business/script");
+const { FIRST_REQUEST_ACTION } = require("./business/request");
 
 let win; // 윈도우 브라우저 전역 변수 선언
 
@@ -101,19 +105,37 @@ async function createWindow() {
     }
 
     //헤더 탭 클릭
-    await new Promise((resolve) => {
-      setTimeout(async () => {
+    await asyncFunction(
+      async () =>
         await win.webContents.executeJavaScript(`
         ${GET_ELEMENT_BY_XPATH}
         const headerTap = getElementByXPath("${FIRST_HEADER_TAP_XPATH}");
         headerTap.click();
+    `)
+    );
+
+    //레프트 메뉴 클릭
+    await asyncFunction(async () => {
+      await win.webContents.executeJavaScript(`
+        ${GET_ELEMENT_BY_XPATH}
+        const headerTap = getElementByXPath("${LEFT_MENU_XPATH}");
+        headerTap.click();
     `);
-        resolve();
-      }, Math.random() * 3000);
     });
 
     //데이터 반환
     //TODO : blabla
+    await asyncFunction(
+      async () => {
+        await win.webContents.executeJavaScript(`${SELECTED_ID_FUNCTION}`);
+        const first_request_action_script = FIRST_REQUEST_ACTION();
+        const first_result = await win.webContents.executeJavaScript(
+          first_request_action_script
+        );
+        console.log(first_result);
+      }
+      //${FIRST_REQUEST_ACTION()}
+    );
 
     console.log("end");
     return new Promise((resolve) => {

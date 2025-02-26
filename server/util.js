@@ -6,6 +6,7 @@ module.exports = {
   clickButton,
   setupLoggers,
   parseJson,
+  asyncFunction,
 };
 
 async function moveMouseSmoothly(win, result) {
@@ -75,6 +76,15 @@ function setupLoggers(log) {
     path.join(appDirectory, "logs", `${yyyymmdd}.log`);
   console.log(path.join(appDirectory, "logs", `${yyyymmdd}.log`));
   log.info("init log complete");
+}
+
+async function asyncFunction(todo) {
+  return await new Promise((resolve) => {
+    setTimeout(async () => {
+      await todo();
+      resolve();
+    }, Math.random() * 3000);
+  });
 }
 
 function parseJson(str) {
