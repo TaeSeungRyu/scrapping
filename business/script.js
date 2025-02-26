@@ -32,6 +32,8 @@ function getOptionValueByText(selectSelector, text) {
 
 const LEFT_MENU_XPATH = "/html/body/div[2]/div/div[3]/aside/nav/ul/li[2]/a";
 
+const LOG_OUT_XPATH = "/html/body/div[2]/header/div[1]/ul/li[2]/a";
+
 module.exports = {
   ID_SELECTOR_XPATH,
   PASSWORD_SELECTOR_XPATH,
@@ -40,4 +42,5 @@ module.exports = {
   FIRST_HEADER_TAP_XPATH,
   SELECTED_ID_FUNCTION,
   LEFT_MENU_XPATH,
+  LOG_OUT_XPATH,
 };

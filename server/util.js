@@ -1,13 +1,5 @@
 const path = require("path");
-const { app } = require("electron");
-
-module.exports = {
-  moveMouseSmoothly,
-  clickButton,
-  setupLoggers,
-  parseJson,
-  asyncFunction,
-};
+const { LOG_OUT_XPATH, GET_ELEMENT_BY_XPATH } = require("../business/script");
 
 async function moveMouseSmoothly(win, result) {
   let targetX = result.left + result.width / 2;
@@ -40,8 +32,6 @@ async function moveMouseSmoothly(win, result) {
 async function clickButton(win, result) {
   let x = Math.floor(result.left + result.width / 2);
   let y = Math.floor(result.top + result.height / 2);
-
-  console.log("click button start", x, y);
   await win.webContents.sendInputEvent({ type: "mouseMove", x, y });
   await win.webContents.sendInputEvent({ type: "mouseEnter", x, y });
   await win.webContents.sendInputEvent({
@@ -74,15 +64,18 @@ function setupLoggers(log) {
 
   log.transports.file.resolvePath = () =>
     path.join(appDirectory, "logs", `${yyyymmdd}.log`);
-  console.log(path.join(appDirectory, "logs", `${yyyymmdd}.log`));
   log.info("init log complete");
 }
 
 async function asyncFunction(todo) {
   return await new Promise((resolve) => {
     setTimeout(async () => {
-      await todo();
-      resolve();
+      try {
+        const result = await todo();
+        resolve(result);
+      } catch (e) {
+        resolve(e);
+      }
     }, Math.random() * 3000);
   });
 }
@@ -95,3 +88,28 @@ function parseJson(str) {
     return null;
   }
 }
+
+function isError(win, e) {
+  if (e instanceof Error) {
+    logOutPage(win);
+    return true;
+  }
+  return false;
+}
+
+function logOutPage(win) {
+  win.webContents.executeJavaScript(`
+    ${GET_ELEMENT_BY_XPATH};
+    getElementByXPath("${LOG_OUT_XPATH}")?.click();
+`);
+}
+
+module.exports = {
+  moveMouseSmoothly,
+  clickButton,
+  setupLoggers,
+  parseJson,
+  asyncFunction,
+  isError,
+  logOutPage,
+};

@@ -13,12 +13,13 @@ function _startExpressServer(todo, taskQueue) {
   expressApp.get("/", (req, res) => {
     taskQueue.addTask(async () => {
       const result = await todo();
+      res.set("Content-Type", "application/json");
       res.send(JSON.stringify(result));
     });
   });
 
   const server = expressApp.listen(PORT, () => {
-    console.log(`Express server running at http://localhost:${PORT}/`);
+    console.log(`scrapping server running at http://localhost:${PORT}/`);
   });
 
   return server;
