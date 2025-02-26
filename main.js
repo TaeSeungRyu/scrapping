@@ -19,17 +19,13 @@ const {
   FIRST_HEADER_TAP_XPATH,
   LEFT_MENU_XPATH,
   SELECTED_ID_FUNCTION,
-} = require("./business/script");
+} = require("./business/default-script");
 const {
   FIRST_REQUEST_ACTION,
   SECOND_REQUEST_ACTION,
-} = require("./business/request");
+} = require("./business/request-script");
 
 let win; // 윈도우 브라우저 전역 변수 선언
-
-// 환경 변수에서 계정 정보 가져오기
-const userId = process.env.ID;
-const userPassword = process.env.PASSWORD;
 const scrapingUrl = process.env.SCRAPING_URL;
 
 setupLoggers(log);
@@ -51,6 +47,7 @@ async function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      disableDialogs: true,
     },
   });
   //새 창 방지
@@ -63,8 +60,8 @@ async function createWindow() {
     return { action: "deny" };
   });
 
-  runHttpServer(async () => {
-    const startTime = Date.now(); //
+  runHttpServer(async ({ _username, _password, startDate, endDate }) => {
+    const startTime = Date.now();
     try {
       await win.loadURL(scrapingUrl);
     } catch (e) {
@@ -79,15 +76,14 @@ async function createWindow() {
     }
 
     await _firstInit(win);
-
     //진입
     await win.webContents.executeJavaScript(`
         ${GET_ELEMENT_BY_XPATH}
         const idField = getElementByXPath("${ID_SELECTOR_XPATH}");
         const passwordField = getElementByXPath("${PASSWORD_SELECTOR_XPATH}");
         if (idField && passwordField) {
-          idField.value = "${userId}"; 
-          passwordField.value = "${userPassword}";
+          idField.value = "${_username}"; 
+          passwordField.value = "${_password}";
           "";
         } else {
           "error";
@@ -158,7 +154,10 @@ async function createWindow() {
     `);
     });
     if (isError(win, leftMenuClickResult)) {
-      log.error("left menu not found", leftMenuClickResult);
+      log.error(
+        "id, password wrong or left menu not found",
+        leftMenuClickResult
+      );
       return new Promise((resolve) => {
         resolve({
           success: false,
@@ -172,7 +171,10 @@ async function createWindow() {
     //데이터 반환
     await asyncFunction(async () => {
       await win.webContents.executeJavaScript(`${SELECTED_ID_FUNCTION}`);
-      const first_request_action_script = FIRST_REQUEST_ACTION();
+      const first_request_action_script = FIRST_REQUEST_ACTION(
+        startDate,
+        endDate
+      );
       const first_result = await win.webContents.executeJavaScript(
         first_request_action_script
       );
@@ -184,7 +186,7 @@ async function createWindow() {
         await Promise.all(
           first_result.resultList.map(async (item) => {
             const realData = await win.webContents.executeJavaScript(
-              SECOND_REQUEST_ACTION(null, null, item.stdDate)
+              SECOND_REQUEST_ACTION(startDate, endDate, item.stdDate)
             );
             realDataArray.push({ stdDate: item.stdDate, data: realData });
           })

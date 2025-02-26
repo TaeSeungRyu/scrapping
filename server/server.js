@@ -11,8 +11,20 @@ module.exports = {
 function _startExpressServer(todo, taskQueue) {
   const expressApp = express();
   expressApp.get("/", (req, res) => {
+    const {
+      username: _username,
+      password: _password,
+      startDate,
+      endDate,
+    } = req.query;
+
     taskQueue.addTask(async () => {
-      const result = await todo();
+      const result = await todo({
+        _username,
+        _password,
+        startDate,
+        endDate,
+      });
       res.set("Content-Type", "application/json");
       res.send(JSON.stringify(result));
     });

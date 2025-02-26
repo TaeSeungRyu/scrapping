@@ -1,5 +1,8 @@
 const path = require("path");
-const { LOG_OUT_XPATH, GET_ELEMENT_BY_XPATH } = require("../business/script");
+const {
+  LOG_OUT_XPATH,
+  GET_ELEMENT_BY_XPATH,
+} = require("../business/default-script");
 
 async function moveMouseSmoothly(win, result) {
   let targetX = result.left + result.width / 2;

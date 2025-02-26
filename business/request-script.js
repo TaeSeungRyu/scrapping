@@ -27,7 +27,7 @@ var __tmpParam = "merGrpId=" + __merGrpId + "&mbrId=" + __mbrId + "&startDate=" 
 return await fetch("${process.env.FIRST_DATA_URL}?" + __tmpParam)
   .then(response => response.json()) 
   .catch(error => console.error("Error:", error));  
-  }
+  }  
   fetchData();
 `;
 };
