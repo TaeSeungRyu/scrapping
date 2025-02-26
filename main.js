@@ -67,7 +67,6 @@ async function createWindow() {
   });
 
   runHttpServer(async ({ _username, _password, startDate, endDate }) => {
-    const startTime = Date.now();
     try {
       await win.loadURL(scrapingUrl);
     } catch (e) {
@@ -217,12 +216,8 @@ async function createWindow() {
         );
       }
     });
-
     console.log("end, data len : ", realDataArray.length);
     logOutPage(win);
-    const endTime = Date.now(); // 종료 시간 기록
-    const elapsedTime = endTime - startTime; // 걸린 시간 계산
-    console.log(`working time : ${elapsedTime}ms`);
     return new Promise((resolve) => {
       resolve({ success: true, data: realDataArray });
     });
