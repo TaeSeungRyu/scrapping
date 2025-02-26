@@ -12,9 +12,8 @@ function _startExpressServer(todo, taskQueue) {
   const expressApp = express();
   expressApp.get("/", (req, res) => {
     taskQueue.addTask(async () => {
-      todo().finally(() => {
-        res.send("Hello from Electron Express Server!");
-      });
+      const result = await todo();
+      res.send(JSON.stringify(result));
     });
   });
 

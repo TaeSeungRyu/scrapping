@@ -18,7 +18,10 @@ const {
   LEFT_MENU_XPATH,
   SELECTED_ID_FUNCTION,
 } = require("./business/script");
-const { FIRST_REQUEST_ACTION } = require("./business/request");
+const {
+  FIRST_REQUEST_ACTION,
+  SECOND_REQUEST_ACTION,
+} = require("./business/request");
 
 let win; // 윈도우 브라우저 전역 변수 선언
 
@@ -122,9 +125,8 @@ async function createWindow() {
         headerTap.click();
     `);
     });
-
+    const realDataArray = [];
     //데이터 반환
-    //TODO : blabla
     await asyncFunction(
       async () => {
         await win.webContents.executeJavaScript(`${SELECTED_ID_FUNCTION}`);
@@ -132,16 +134,29 @@ async function createWindow() {
         const first_result = await win.webContents.executeJavaScript(
           first_request_action_script
         );
-        console.log(first_result);
+        console.log(first_result !== null, first_result?.resultList?.length);
+        if (
+          first_result &&
+          first_result.resultList &&
+          first_result.resultList.length > 0
+        ) {
+          await Promise.all(
+            first_result.resultList.map(async (item) => {
+              console.log(item.stdDate);
+              const realData = await win.webContents.executeJavaScript(
+                SECOND_REQUEST_ACTION(null, null, item.stdDate)
+              );
+              realDataArray.push(realData);
+            })
+          );
+        }
       }
       //${FIRST_REQUEST_ACTION()}
     );
 
-    console.log("end");
+    console.log("end", realDataArray.length);
     return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, 1000);
+      resolve({ result: realDataArray });
     });
   });
 }

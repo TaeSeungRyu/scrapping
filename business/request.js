@@ -32,6 +32,24 @@ return await fetch("${process.env.FIRST_DATA_URL}?" + __tmpParam)
 `;
 };
 
+const SECOND_REQUEST_ACTION = (startDate, endDate, stdDateArray) => {
+  if (stdDateArray) stdDateArray = stdDateArray.replace(/\-/g, "");
+  if (!startDate) startDate = _getDay(true);
+  if (!endDate) endDate = _getDay();
+  return `
+  async function fetchDataDetail() {  
+var __merGrpId = getOptionValueByText("merGrpId", );
+var __mbrId = document.getElementById("mbrId").value;
+var __tmpParam = "q.stdDateArray=${stdDateArray}&q.merGrpId=" + __merGrpId + "&q.mbrId=" + __mbrId + "&q.startDate=" + "${startDate}" + "&q.endDate=" + "${endDate}&q.dataPerPage=500&currentPage=1"
+return await fetch("${process.env.SECOND_DATA_URL}?" + __tmpParam)
+  .then(response => response.json()) 
+  .catch(error => console.error("Error:", error));  
+  }
+fetchDataDetail();
+    `;
+};
+
 module.exports = {
   FIRST_REQUEST_ACTION,
+  SECOND_REQUEST_ACTION,
 };
