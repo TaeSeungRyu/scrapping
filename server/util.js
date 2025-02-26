@@ -4,6 +4,7 @@ const {
   GET_ELEMENT_BY_XPATH,
 } = require("../business/default-script");
 
+//마우스 이동 함수
 async function moveMouseSmoothly(win, result) {
   let targetX = result.left + result.width / 2;
   let targetY = result.top + result.height / 2;
@@ -44,7 +45,6 @@ async function clickButton(win, result) {
     y,
     clickCount: 1,
   });
-
   return new Promise((resolve) => {
     setTimeout(() => {
       win.webContents.sendInputEvent({
@@ -59,17 +59,18 @@ async function clickButton(win, result) {
   });
 }
 
+//로그 설정 함수
 function setupLoggers(log) {
   const appDirectory = process.cwd(); // 또는 app.getAppPath()
-
   const date = new Date();
   const yyyymmdd = date.toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD 형식
-
   log.transports.file.resolvePath = () =>
     path.join(appDirectory, "logs", `${yyyymmdd}.log`);
   log.info("init log complete");
 }
 
+//todo 함수를 실행하고 결과를 반환하는 함수
+//todo 함수는 비동기 함수로 작성되어야 함
 async function asyncFunction(todo) {
   return await new Promise((resolve) => {
     setTimeout(async () => {
@@ -83,6 +84,7 @@ async function asyncFunction(todo) {
   });
 }
 
+//json 파싱 함수
 function parseJson(str) {
   try {
     return JSON.parse(str);
@@ -92,6 +94,7 @@ function parseJson(str) {
   }
 }
 
+//에러 체크 함수
 function isError(win, e) {
   if (e instanceof Error) {
     logOutPage(win);
@@ -100,6 +103,7 @@ function isError(win, e) {
   return false;
 }
 
+//로그아웃 함수
 function logOutPage(win) {
   win.webContents.executeJavaScript(`
     ${GET_ELEMENT_BY_XPATH};

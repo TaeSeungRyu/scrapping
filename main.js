@@ -32,10 +32,16 @@ setupLoggers(log);
 
 function _firstInit(win) {
   return new Promise((resolve) => {
-    win.setFullScreen(true);
-    win.webContents.session.clearCache();
-    win.webContents.session.clearStorageData();
-    win.webContents.session.clearAuthCache();
+    try {
+      if (win) {
+        win.setFullScreen(true);
+        win.webContents.session.clearCache();
+        win.webContents.session.clearStorageData();
+        win.webContents.session.clearAuthCache();
+      }
+    } catch (error) {
+      log.error("first init error", error);
+    }
     resolve();
   });
 }
@@ -65,17 +71,25 @@ async function createWindow() {
     try {
       await win.loadURL(scrapingUrl);
     } catch (e) {
-      log.error("load url error", e);
+      log.error("first load url error", e);
+    }
+    await _firstInit(win);
+
+    //헤더 탭 클릭
+    const accessPageResult = await asyncFunction(
+      async () => await win.loadURL(scrapingUrl)
+    );
+    if (isError(win, accessPageResult)) {
+      log.error("load url error", accessPageResult);
       return new Promise((resolve) => {
         resolve({
           success: false,
           cause: "load url error",
-          message: e.message,
+          message: accessPageResult.message,
         });
       });
     }
 
-    await _firstInit(win);
     //진입
     await win.webContents.executeJavaScript(`
         ${GET_ELEMENT_BY_XPATH}
@@ -185,10 +199,20 @@ async function createWindow() {
       ) {
         await Promise.all(
           first_result.resultList.map(async (item) => {
-            const realData = await win.webContents.executeJavaScript(
-              SECOND_REQUEST_ACTION(startDate, endDate, item.stdDate)
-            );
-            realDataArray.push({ stdDate: item.stdDate, data: realData });
+            let currentPage = 1;
+            while (true) {
+              const realData = await win.webContents.executeJavaScript(
+                SECOND_REQUEST_ACTION(
+                  startDate,
+                  endDate,
+                  item.stdDate,
+                  currentPage
+                )
+              );
+              if (!realData || realData.length == 0 || currentPage > 10) break; //하루 10만건 데이터가 없겠..지?
+              realDataArray.push({ stdDate: item.stdDate, data: realData });
+              currentPage++;
+            }
           })
         );
       }
