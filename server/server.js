@@ -1,11 +1,13 @@
 const { app } = require("electron");
 const express = require("express");
 const { TaskQueue } = require("./queue");
+const { closeDb, connectionDb } = require("../db/db");
 
 const PORT = 3313;
 
 function _startExpressServer(todo, taskQueue) {
   const expressApp = express();
+  connectionDb();
   expressApp.get("/", (req, res) => {
     const {
       username: _username,
@@ -36,6 +38,7 @@ function runHttpServer(todo) {
   const server = _startExpressServer(todo, taskQueue);
   app.on("will-quit", () => {
     server.close();
+    closeDb();
   });
 }
 
