@@ -2,12 +2,15 @@ const { app } = require("electron");
 const express = require("express");
 const { TaskQueue } = require("./queue");
 const { closeDb, connectionDb } = require("../db/db");
+const { connectionMongoDb, closeMongoDb } = require("../mongo/mongo");
+const { getListMongo, insertItemMongo } = require("../mongo/repository");
 
 const PORT = 3313;
 
 function _startExpressServer(todo, taskQueue) {
   const expressApp = express();
   connectionDb();
+  connectionMongoDb();
   expressApp.get("/", (req, res) => {
     const {
       username: _username,
@@ -39,6 +42,7 @@ function runHttpServer(todo) {
   app.on("will-quit", () => {
     server.close();
     closeDb();
+    closeMongoDb();
   });
 }
 
