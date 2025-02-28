@@ -1,24 +1,33 @@
 const RecordItem = require("./domain");
 
-async function getListMongo() {
+const _getCurrentDay = () => new Date().toISOString().split("T")[0];
+
+async function getRecordListMongo() {
   return await RecordItem.find({});
 }
 
-async function insertItemMongo(item) {
+async function insertRecordItemMongo(item) {
   return await RecordItem.create(item);
 }
 
-async function deleteItemMongo(id) {
-  return await RecordItem.findByIdAndDelete(id).exec();
+async function getScheduleListMongo(datetime) {
+  if (!datetime) {
+    datetime = _getCurrentDay();
+  }
+  return await RecordItem.RecordSchedule.find({
+    recordTime: datetime,
+  });
 }
 
-async function getItemMongo(id) {
-  return await RecordItem.findById(id).exec();
+async function insertScheduleItemMongo(item) {
+  item.recordTime = _getCurrentDay();
+  item.status = "FINISHED";
+  return await RecordItem.RecordSchedule.create(item);
 }
 
 module.exports = {
-  getListMongo,
-  insertItemMongo,
-  deleteItemMongo,
-  getItemMongo,
+  getRecordListMongo,
+  insertRecordItemMongo,
+  insertScheduleItemMongo,
+  getScheduleListMongo,
 };

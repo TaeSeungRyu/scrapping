@@ -12,7 +12,6 @@ const _getDay = (isFirst) => {
   } else {
     yyyymmdd += String(today.getDate()).padStart(2, "0");
   }
-
   return yyyymmdd;
 };
 

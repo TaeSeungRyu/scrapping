@@ -20,6 +20,7 @@
     "express": "^4.21.2",
     "http-server": "^14.1.1",
     "mongoose": "^8.11.0",
+    "node-schedule": "^2.1.1",
     "pg": "^8.13.3"
   },
   "build": {
