@@ -20,6 +20,7 @@ function _startExpressServer(todo, taskQueue) {
       endDate,
     } = req.query;
 
+    //TODO : 나중에 정말 불가능할시 아래 주석 구현
     taskQueue.addTask(async () => {
       const result = await todo({
         _username,
@@ -27,6 +28,9 @@ function _startExpressServer(todo, taskQueue) {
         startDate,
         endDate,
       });
+      if (result.success) {
+        ///////////////////////console.log(result.data);
+      }
       res.set("Content-Type", "application/json");
       res.send(JSON.stringify(result));
     });
