@@ -10,9 +10,15 @@ async function insertRecordItemMongo(item) {
   return await RecordItem.create(item);
 }
 
-async function getScheduleListMongo(datetime) {
+async function getScheduleListMongo(datetime, username) {
   if (!datetime) {
     datetime = _getCurrentDay();
+  }
+  if (username) {
+    return await RecordItem.RecordSchedule.find({
+      recordTime: datetime,
+      username: username,
+    });
   }
   return await RecordItem.RecordSchedule.find({
     recordTime: datetime,

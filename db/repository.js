@@ -1,5 +1,5 @@
 const { postgresClient, tableName } = require("./db");
-const ScrapperData = require("./domain");
+const { ScrapperData } = require("./domain");
 
 async function getMainDataList() {
   const result = await postgresClient.query(`SELECT * FROM ${tableName}`);
@@ -15,7 +15,18 @@ async function getMainDataItem(username) {
   return new ScrapperData(result.rows[0]);
 }
 
+async function getMainDataListPaging(page = 1, limit = 100) {
+  const offset = (page - 1) * limit;
+  const result = await postgresClient.query(
+    `SELECT * FROM ${tableName} ORDER BY id LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  );
+  if (result.rows.length === 0) return [];
+  return result.rows.map((row) => new ScrapperData(row));
+}
+
 module.exports = {
   getMainDataList,
   getMainDataItem,
+  getMainDataListPaging,
 };

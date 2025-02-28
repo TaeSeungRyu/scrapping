@@ -11,7 +11,7 @@ function _startExpressServer(todo, taskQueue) {
   const expressApp = express();
   connectionDb();
   connectionMongoDb();
-  runSchedule();
+  runSchedule(taskQueue);
   expressApp.get("/", (req, res) => {
     const {
       username: _username,

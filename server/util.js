@@ -143,6 +143,8 @@ function splitByMonth(startDate, endDate) {
   return result;
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // 테스트
 //console.log(splitByMonth("2024-01-01", "2024-03-20"));
 
@@ -154,4 +156,5 @@ module.exports = {
   asyncFunction,
   isError,
   logOutPage,
+  sleep,
 };

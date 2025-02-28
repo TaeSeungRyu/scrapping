@@ -4,12 +4,13 @@ const STATUS_ENUM = {
 };
 
 class ScrapperData {
-  constructor({ id, username, company, status, loginFailCount }) {
+  constructor({ id, username, company, status, loginFailCount, password }) {
     this.id = id;
-    this.username = username | "";
-    this.company = company | -1;
-    this.status = status | "";
-    this.loginFailCount = loginFailCount | -1;
+    this.username = username || "";
+    this.company = company || -1;
+    this.status = status || "";
+    this.loginFailCount = loginFailCount || -1;
+    this.password = password || "";
   }
 }
 
