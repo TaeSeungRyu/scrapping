@@ -154,17 +154,17 @@ async function runScrapping({ _username, _password, startDate, endDate }) {
     const DAYS = splitByMonth(startDate, endDate);
     for (let i = 0; i < DAYS.length; i++) {
       const [start, end] = DAYS[i];
-      const first_request_action_script = FIRST_REQUEST_ACTION(start, end);
-      const first_result = await win.webContents.executeJavaScript(
-        first_request_action_script
+      const firstActionScript = FIRST_REQUEST_ACTION(start, end);
+      const firstResult = await win.webContents.executeJavaScript(
+        firstActionScript
       );
       if (
-        first_result &&
-        first_result.resultList &&
-        first_result.resultList.length > 0
+        firstResult &&
+        firstResult.resultList &&
+        firstResult.resultList.length > 0
       ) {
         await Promise.all(
-          first_result.resultList.map(async (item) => {
+          firstResult.resultList.map(async (item) => {
             let currentPage = 1;
             while (true) {
               const realData = await win.webContents.executeJavaScript(

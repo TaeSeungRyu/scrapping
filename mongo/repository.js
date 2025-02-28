@@ -17,6 +17,7 @@ async function getScheduleListMongo(datetime, username) {
     return await RecordItem.RecordSchedule.find({
       recordTime: datetime,
       username: username,
+      status: { $in: ["SUCCESS", "WORKING"] },
     });
   }
   return await RecordItem.RecordSchedule.find({
@@ -24,15 +25,19 @@ async function getScheduleListMongo(datetime, username) {
   });
 }
 
-async function insertScheduleItemMongo(item) {
+async function saveScheduleItemMongo(item, status = "WORKING") {
   item.recordTime = _getCurrentDay();
-  item.status = "FINISHED";
-  return await RecordItem.RecordSchedule.create(item);
+  item.status = status;
+  return await RecordItem.RecordSchedule.findOneAndReplace(
+    { username: item.username, recordTime: item.recordTime },
+    item,
+    { upsert: true, new: true }
+  );
 }
 
 module.exports = {
   getRecordListMongo,
   insertRecordItemMongo,
-  insertScheduleItemMongo,
+  saveScheduleItemMongo,
   getScheduleListMongo,
 };

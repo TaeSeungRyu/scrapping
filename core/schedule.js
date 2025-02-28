@@ -3,7 +3,7 @@ const { getMainDataListPaging } = require("../db/repository");
 const { sleep } = require("../server/util");
 const {
   getScheduleListMongo,
-  insertScheduleItemMongo,
+  saveScheduleItemMongo,
 } = require("../mongo/repository");
 const log = require("electron-log");
 const { runScrapping } = require("./core");
@@ -12,7 +12,7 @@ let isRunning = !false; //////////테스트 하느라 !false로 변경(나중에
 
 const runSchedule = (taskQueue) => {
   //TODO : 나중에 정말 불가능할시 아래 크론 수정(분단위 또는 시간단위 등)
-  schedule.scheduleJob("28 * * * * *", async function () {
+  schedule.scheduleJob("22 * * * * *", async function () {
     if (isRunning) {
       console.log("already running");
       return;
@@ -26,8 +26,8 @@ const runSchedule = (taskQueue) => {
       while (result && result.length > 0) {
         for (const user of result) {
           const isWorked = await getScheduleListMongo(null, user.username);
-          console.log(isWorked);
           if (!isWorked || isWorked.length == 0) {
+            saveScheduleItemMongo(user, "WORKING");
             taskQueue.addTask(async () => {
               const result = await runScrapping({
                 _username: user.username,
@@ -35,11 +35,9 @@ const runSchedule = (taskQueue) => {
                 startDate: null,
                 endDate: null,
               });
+              saveScheduleItemMongo(user, result.success ? "SUCCESS" : "FAIL");
               //TODO : 나중에 정말 불가능할시 아래 주석 구현
-              if (result.success) {
-                insertScheduleItemMongo(user);
-                ///////////////////////console.log(result.data);
-              }
+              // if (result.success) { 데이터 전처리~...
             });
             await sleep(8888); // 각 작업 사이에 8000ms 딜레이(개당 작업이 대충 8초걸림)
           }
