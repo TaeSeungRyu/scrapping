@@ -6,6 +6,7 @@ const {
   asyncFunction,
   isError,
   logOutPage,
+  splitByMonth,
 } = require("../server/util");
 const {
   ID_SELECTOR_XPATH,
@@ -136,11 +137,11 @@ async function runScrapping({ _username, _password, startDate, endDate }) {
     `);
   });
   if (isError(win, leftMenuClickResult)) {
-    log.error("id, password wrong or left menu not found", leftMenuClickResult);
+    log.error("id, password wrong or page pending", leftMenuClickResult);
     return new Promise((resolve) => {
       resolve({
         success: false,
-        cause: "left menu not found",
+        cause: "id, password wrong or page pending",
         message: leftMenuClickResult.message,
       });
     });
@@ -150,36 +151,32 @@ async function runScrapping({ _username, _password, startDate, endDate }) {
   //데이터 반환
   await asyncFunction(async () => {
     await win.webContents.executeJavaScript(`${SELECTED_ID_FUNCTION}`);
-    const first_request_action_script = FIRST_REQUEST_ACTION(
-      startDate,
-      endDate
-    );
-    const first_result = await win.webContents.executeJavaScript(
-      first_request_action_script
-    );
-    if (
-      first_result &&
-      first_result.resultList &&
-      first_result.resultList.length > 0
-    ) {
-      await Promise.all(
-        first_result.resultList.map(async (item) => {
-          let currentPage = 1;
-          while (true) {
-            const realData = await win.webContents.executeJavaScript(
-              SECOND_REQUEST_ACTION(
-                startDate,
-                endDate,
-                item.stdDate,
-                currentPage
-              )
-            );
-            if (!realData || realData.length == 0 || currentPage > 10) break; //하루 10만건 데이터가 없겠..지?
-            realDataArray.push({ stdDate: item.stdDate, data: realData });
-            currentPage++;
-          }
-        })
+    const DAYS = splitByMonth(startDate, endDate);
+    for (let i = 0; i < DAYS.length; i++) {
+      const [start, end] = DAYS[i];
+      const first_request_action_script = FIRST_REQUEST_ACTION(start, end);
+      const first_result = await win.webContents.executeJavaScript(
+        first_request_action_script
       );
+      if (
+        first_result &&
+        first_result.resultList &&
+        first_result.resultList.length > 0
+      ) {
+        await Promise.all(
+          first_result.resultList.map(async (item) => {
+            let currentPage = 1;
+            while (true) {
+              const realData = await win.webContents.executeJavaScript(
+                SECOND_REQUEST_ACTION(start, end, item.stdDate, currentPage)
+              );
+              if (!realData || realData.length == 0 || currentPage > 10) break; //하루 10만건 데이터가 없겠..지?
+              realDataArray.push({ stdDate: item.stdDate, data: realData });
+              currentPage++;
+            }
+          })
+        );
+      }
     }
   });
   console.log("end, data len : ", realDataArray.length);

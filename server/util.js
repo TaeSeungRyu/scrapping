@@ -130,16 +130,13 @@ function splitByMonth(startDate, endDate) {
 
     const rangeStart = current;
     const rangeEnd = monthEnd < end ? monthEnd : end; // 마지막 달이면 종료 날짜 조정
-
     result.push([
       rangeStart.toISOString().split("T")[0],
       rangeEnd.toISOString().split("T")[0],
     ]);
-
     // 다음 달의 1일로 이동
     current = new Date(year, month, 1);
   }
-
   return result;
 }
 
@@ -157,4 +154,5 @@ module.exports = {
   isError,
   logOutPage,
   sleep,
+  splitByMonth,
 };
