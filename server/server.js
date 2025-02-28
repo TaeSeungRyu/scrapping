@@ -1,17 +1,12 @@
+const log = require("electron-log");
 const { app } = require("electron");
 const express = require("express");
-const { TaskQueue } = require("./queue");
-const { closeDb, connectionDb } = require("../db/db");
-const { connectionMongoDb, closeMongoDb } = require("../mongo/mongo");
-const { runSchedule } = require("../schedule");
 
 const PORT = 3313;
 
 function _startExpressServer(todo, taskQueue) {
   const expressApp = express();
-  connectionDb();
-  connectionMongoDb();
-  runSchedule(taskQueue);
+
   expressApp.get("/", (req, res) => {
     const {
       username: _username,
@@ -19,7 +14,6 @@ function _startExpressServer(todo, taskQueue) {
       startDate,
       endDate,
     } = req.query;
-
     //TODO : 나중에 정말 불가능할시 아래 주석 구현
     taskQueue.addTask(async () => {
       const result = await todo({
@@ -41,13 +35,11 @@ function _startExpressServer(todo, taskQueue) {
   return server;
 }
 
-function runHttpServer(todo) {
-  const taskQueue = new TaskQueue();
+function runHttpServer(taskQueue, todo) {
   const server = _startExpressServer(todo, taskQueue);
   app.on("will-quit", () => {
     server.close();
-    closeDb();
-    closeMongoDb();
+    log.info("scrapping server closed");
   });
 }
 

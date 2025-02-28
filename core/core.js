@@ -2,12 +2,11 @@ require("dotenv").config();
 const {
   moveMouseSmoothly,
   clickButton,
-  setupLoggers,
   parseJson,
   asyncFunction,
   isError,
   logOutPage,
-} = require("./server/util");
+} = require("../server/util");
 const {
   ID_SELECTOR_XPATH,
   PASSWORD_SELECTOR_XPATH,
@@ -16,15 +15,17 @@ const {
   FIRST_HEADER_TAP_XPATH,
   LEFT_MENU_XPATH,
   SELECTED_ID_FUNCTION,
-} = require("./business/default-script");
+} = require("../business/default-script");
 const {
   FIRST_REQUEST_ACTION,
   SECOND_REQUEST_ACTION,
-} = require("./business/request-script");
+} = require("../business/request-script");
+
 const log = require("electron-log");
 const scrapingUrl = process.env.SCRAPING_URL;
 let win;
 
+//메인 파일로부터 윈도우 객체를 등록합니다
 async function injectWin(_win) {
   win = _win;
   if (!win) {
@@ -33,7 +34,9 @@ async function injectWin(_win) {
   }
 }
 
+//스크래핑을 실행 합니다.
 async function runScrapping({ _username, _password, startDate, endDate }) {
+  //첫 진입, 화면 캐싱을 위해 한번 로드
   try {
     await win.loadURL(scrapingUrl);
   } catch (e) {
@@ -41,7 +44,7 @@ async function runScrapping({ _username, _password, startDate, endDate }) {
   }
   await _firstInit(win);
 
-  //헤더 탭 클릭
+  //두번째 실제 진입, 로그인 화면 실행
   const accessPageResult = await asyncFunction(
     async () => await win.loadURL(scrapingUrl)
   );

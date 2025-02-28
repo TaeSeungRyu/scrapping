@@ -1,14 +1,14 @@
 const schedule = require("node-schedule");
-const { getMainDataListPaging } = require("./db/repository");
-const { sleep } = require("./server/util");
+const { getMainDataListPaging } = require("../db/repository");
+const { sleep } = require("../server/util");
 const {
   getScheduleListMongo,
   insertScheduleItemMongo,
-} = require("./mongo/repository");
+} = require("../mongo/repository");
 const log = require("electron-log");
 const { runScrapping } = require("./core");
 
-let isRunning = !false; //////////테스트 하느라 !false로 변경(나중에 true로 변경)
+let isRunning = false; //////////테스트 하느라 !false로 변경(나중에 true로 변경)
 
 const runSchedule = (taskQueue) => {
   //TODO : 나중에 정말 불가능할시 아래 크론 수정(분단위 또는 시간단위 등)
@@ -21,7 +21,7 @@ const runSchedule = (taskQueue) => {
 
     try {
       let page = 1;
-      let limit = 5;
+      let limit = 100; // 한 페이지당 100개씩 가져옴
       let result = await getMainDataListPaging(page, limit);
       while (result && result.length > 0) {
         for (const user of result) {
