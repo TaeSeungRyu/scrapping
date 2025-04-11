@@ -12,7 +12,7 @@ let isRunning = !false; //////////테스트 하느라 !false로 변경(나중에
 
 const runSchedule = (taskQueue) => {
   //TODO : 나중에 정말 불가능할시 아래 크론 수정(분단위 또는 시간단위 등)
-  schedule.scheduleJob("22 * * * * *", async function () {
+  schedule.scheduleJob("44 * * * * *", async function () {
     if (isRunning) {
       console.log("already running");
       return;
